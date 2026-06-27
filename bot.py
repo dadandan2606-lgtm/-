@@ -29,7 +29,7 @@ def ask_gemini(user_id: int, user_message: str, system_prompt: str = None) -> st
     full_prompt = (system_prompt + "\n\n" + user_message) if system_prompt else user_message
 
     response = gemini.models.generate_content(
-model="gemini-1.5-flash-8b",
+model="gemini-2.0-flash",
         contents=full_prompt
     )
     reply = response.text
