@@ -60,6 +60,7 @@ async def ping(interaction: discord.Interaction):
 @tree.command(name="ask", description="AIに何でも質問できます")
 @app_commands.describe(question="質問内容")
 async def ask(interaction: discord.Interaction, question: str):
+    print(f"ask command received: {question}")
     await interaction.response.defer()
     try:
         reply = ask_gemini(
