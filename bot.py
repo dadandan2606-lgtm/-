@@ -78,8 +78,8 @@ async def ask(interaction: discord.Interaction, question: str):
         if "429" in str(e) or "quota" in str(e).lower():
             await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！")
         else:
+            print(f"ERROR: {e}")
             await interaction.followup.send(f"❌ エラーが発生しました: {e}")
-
 @tree.command(name="script", description="スクリプトやコードを生成します")
 @app_commands.describe(
     description="作りたいものの説明",
