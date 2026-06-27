@@ -1,7 +1,7 @@
 import discord
 from discord import app_commands
 import os
-import google.generativeai as genai
+from google import genai
 
 # ボットの設定
 intents = discord.Intents.default()
@@ -10,8 +10,7 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 
 # Geminiクライアント
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-model = genai.GenerativeModel("gemini-2.0-flash-lite")
+gemini = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
 # ユーザーごとの会話履歴
 conversation_history: dict[int, list] = {}
@@ -22,20 +21,22 @@ def ask_gemini(user_id: int, user_message: str, system_prompt: str = None) -> st
 
     conversation_history[user_id].append({
         "role": "user",
-        "parts": [user_message]
+        "parts": [{"text": user_message}]
     })
 
     recent = conversation_history[user_id][-20:]
 
-    chat = model.start_chat(history=recent[:-1])
-    response = chat.send_message(
-        (system_prompt + "\n\n" + user_message) if system_prompt else user_message
+    full_prompt = (system_prompt + "\n\n" + user_message) if system_prompt else user_message
+
+    response = gemini.models.generate_content(
+        model="gemini-2.0-flash-lite",
+        contents=full_prompt
     )
     reply = response.text
 
     conversation_history[user_id].append({
         "role": "model",
-        "parts": [reply]
+        "parts": [{"text": reply}]
     })
 
     return reply
@@ -74,7 +75,10 @@ async def ask(interaction: discord.Interaction, question: str):
                 prefix = "💬 " if i == 0 else ""
                 await interaction.followup.send(f"{prefix}{chunk}")
     except Exception as e:
-        await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！" if "429" in str(e) or "quota" in str(e).lower() else f"❌ エラーが発生しました: {e}")
+        if "429" in str(e) or "quota" in str(e).lower():
+            await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！")
+        else:
+            await interaction.followup.send(f"❌ エラーが発生しました: {e}")
 
 @tree.command(name="script", description="スクリプトやコードを生成します")
 @app_commands.describe(
@@ -97,7 +101,10 @@ async def script(interaction: discord.Interaction, description: str, language: s
             for chunk in chunks:
                 await interaction.followup.send(chunk)
     except Exception as e:
-        await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！" if "429" in str(e) or "quota" in str(e).lower() else f"❌ エラーが発生しました: {e}")
+        if "429" in str(e) or "quota" in str(e).lower():
+            await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！")
+        else:
+            await interaction.followup.send(f"❌ エラーが発生しました: {e}")
 
 @tree.command(name="translate", description="テキストを翻訳します")
 @app_commands.describe(
@@ -117,7 +124,10 @@ async def translate(interaction: discord.Interaction, text: str, target: str = "
         embed.add_field(name="翻訳", value=reply[:500], inline=False)
         await interaction.followup.send(embed=embed)
     except Exception as e:
-        await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！" if "429" in str(e) or "quota" in str(e).lower() else f"❌ エラーが発生しました: {e}")
+        if "429" in str(e) or "quota" in str(e).lower():
+            await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！")
+        else:
+            await interaction.followup.send(f"❌ エラーが発生しました: {e}")
 
 @tree.command(name="clear", description="会話履歴をリセットします")
 async def clear(interaction: discord.Interaction):
