@@ -63,6 +63,7 @@ async def ask(interaction: discord.Interaction, question: str):
     print(f"ask command received: {question}")
     await interaction.response.defer()
     try:
+        print("calling ask_gemini...")
         reply = ask_gemini(
             interaction.user.id,
             question,
