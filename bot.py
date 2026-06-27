@@ -28,13 +28,12 @@ def ask_gemini(user_id: int, user_message: str, system_prompt: str = None) -> st
 
     full_prompt = (system_prompt + "\n\n" + user_message) if system_prompt else user_message
 
-    print(f"sending to gemini...")
-   response = gemini.models.generate_content(
+    response = gemini.models.generate_content(
         model="gemini-2.0-flash-lite",
         contents=full_prompt
     )
-    print(f"gemini response: {response.text[:100]}")
     reply = response.text
+
     conversation_history[user_id].append({
         "role": "model",
         "parts": [{"text": reply}]
@@ -61,10 +60,8 @@ async def ping(interaction: discord.Interaction):
 @tree.command(name="ask", description="AIに何でも質問できます")
 @app_commands.describe(question="質問内容")
 async def ask(interaction: discord.Interaction, question: str):
-    print(f"ask command received: {question}")
     await interaction.response.defer()
     try:
-        print("calling ask_gemini...")
         reply = ask_gemini(
             interaction.user.id,
             question,
@@ -78,11 +75,12 @@ async def ask(interaction: discord.Interaction, question: str):
                 prefix = "💬 " if i == 0 else ""
                 await interaction.followup.send(f"{prefix}{chunk}")
     except Exception as e:
+        print(f"ERROR in ask: {type(e).__name__}: {e}")
         if "429" in str(e) or "quota" in str(e).lower():
             await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！")
         else:
-            print(f"ERROR: {e}")
             await interaction.followup.send(f"❌ エラーが発生しました: {e}")
+
 @tree.command(name="script", description="スクリプトやコードを生成します")
 @app_commands.describe(
     description="作りたいものの説明",
@@ -104,6 +102,7 @@ async def script(interaction: discord.Interaction, description: str, language: s
             for chunk in chunks:
                 await interaction.followup.send(chunk)
     except Exception as e:
+        print(f"ERROR in script: {type(e).__name__}: {e}")
         if "429" in str(e) or "quota" in str(e).lower():
             await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！")
         else:
@@ -127,6 +126,7 @@ async def translate(interaction: discord.Interaction, text: str, target: str = "
         embed.add_field(name="翻訳", value=reply[:500], inline=False)
         await interaction.followup.send(embed=embed)
     except Exception as e:
+        print(f"ERROR in translate: {type(e).__name__}: {e}")
         if "429" in str(e) or "quota" in str(e).lower():
             await interaction.followup.send("⚠️ 本日の無料利用枠が上限に達しました。明日またお試しください！")
         else:
