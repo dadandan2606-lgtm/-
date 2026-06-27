@@ -29,12 +29,12 @@ def ask_gemini(user_id: int, user_message: str, system_prompt: str = None) -> st
     full_prompt = (system_prompt + "\n\n" + user_message) if system_prompt else user_message
 
     print(f"sending to gemini...")
-    response = gemini.models.generate_content(
+   response = gemini.models.generate_content(
         model="gemini-2.0-flash-lite",
         contents=full_prompt
     )
+    print(f"gemini response: {response.text[:100]}")
     reply = response.text
-
     conversation_history[user_id].append({
         "role": "model",
         "parts": [{"text": reply}]
